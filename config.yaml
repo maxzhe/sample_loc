@@ -1,0 +1,57 @@
+# Minimalist Audio Temporal Localization Configuration (Baseline DMC Edition)
+defaults:
+  - _self_
+
+# Network Architecture Params
+model:
+  # [FIXED] Audit 3.2: Rank scaled to 128 to prevent 1x1 convolution bottlenecks across deep 2048-dimensional spaces.
+  dora_rank: 128            
+  dim: 2048                # Main representation manifold dimensionality
+
+# Training & Loss Params
+training:
+  lr: 1e-4
+  max_epochs: 200
+  batch_size: 64           
+  num_workers: 10
+  checkpoint_dir: "..."
+  warmup_epochs: 0
+  
+  # =================================================================
+  # CURRICULUM: FIXED 15S LENGTH, CONTINUOUS LOOP SCALING
+  # =================================================================
+  curriculum:
+    phase1_epochs: 15        # Phase 1: SNR Stabilization (Distractor=0)
+    phase2_epochs: 35        # Phase 2: Distractor introduction & SNR dropping
+    phase3_epochs: 50        # Phase 3: Scatter loops ramp to max by Epoch 100
+  
+  # Minimalist Objective Weights (Direct Matrix Correlation)
+  loss_weights:
+    lambda_supcon: 1.0         # SINCERE Periodicity alignment
+    lambda_infonce: 1.0        # Cross-batch infoNCE alignment
+
+  # =================================================================
+  # TARGET OBSERVABILITY GATING (SOTA FIX)
+  # =================================================================
+  observability:
+    theta_db: -15.0            # SNR threshold inflection point for unobservability
+    beta_temp: 3.0             # Sigmoid temperature (controls slope of the soft label)
+    
+  # Essential Safeguards Only
+  safeguards:
+    alignment_tolerance: 0.05    # Skips frames with interpolation > 5% off-center
+    relaxed_alignment_tolerance: 0.5 
+    min_valid_anchors: 4         
+
+# Data Params (Cyclic Reintegration)
+data:
+  data_root: "./sampleid_dataset"
+  source_sec: 15.0  # Max bounds (now fixed at 15s everywhere)
+  ref_sec: 15.0     # Max bounds
+  matrix_res: 46    # Universal 46 resolution
+  val_split: 0.1
+  prob_distractor: 0.8 
+  snr_db_range: [-10.0, 0.0] 
+  looping_prob: 0.5 # Scales from 0.0 to 0.5 across the first 100 epochs, then locks.
+  force_strict_snr: True # NEW: Set to True to mathematically force all stems (even passing ones) to exact SNR
+  seed: 42
