@@ -1,0 +1,19 @@
+# Deep Learning & Audio Processing
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Training Framework & Configuration
+pytorch-lightning>=2.0.0
+hydra-core>=1.3.0
+omegaconf>=2.3.0
+
+# Parameter Efficient Fine-Tuning (DoRA)
+peft>=0.5.0
+
+# Data Science & Visualization
+numpy
+matplotlib
+
+# Sony SampleID Backbone
+# (Depending on their specific installation method, it can be installed via git)
+pip install git+https://github.com/sony/sampleid.git
